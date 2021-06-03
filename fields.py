@@ -61,25 +61,38 @@ def Z(prime):
             return type(self)(other)
 
         def __add__(self, other):
-            other = self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
             return Zp(self.val + other.val)
 
         def __radd__(self, other):
             return self.__add__(other)
 
         def __sub__(self, other):
-            other = self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
             return Zp(self.val - other.val)
 
         def __rsub__(self, other):
-            other = self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
             return other.__sub__(self)
 
         def __neg__(self):
             return Zp(-self.val)
 
         def __mul__(self, other):
-            other = self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
+
             return Zp(self.val * other.val)
 
         def __rmul__(self, other):
@@ -91,7 +104,10 @@ def Z(prime):
             return Zp(pow(self.val, power, prime)) #Using pow for speed
 
         def __div__(self, other):
-            other = self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
 
             if other.val == 0:
                 raise ZeroDivisionError()
@@ -100,7 +116,10 @@ def Z(prime):
             return self * (other ** (prime - 2)) 
 
         def __rdiv__(self, other):
-            other = self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
             return other.__div__(self)
 
         __floordiv__ = __div__
@@ -116,8 +135,15 @@ def Z(prime):
             return str(self)
 
         def __eq__(self, other):
-            other = self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
             return self.val == other.val;
+
+        def __req__(self, other):
+            return self.__eq__(other)
+
     return Zp
 
 class PolyMeta(type):
@@ -136,12 +162,17 @@ def PolyOver(Ring, symbol='x'):
         s=symbol
 
         @classmethod
-        def set(cls):
-            pass
+        def set(cls, deg):
+            from itertools import product
+            
         
         def __new__(cls, vals):
-            return tuple.__new__(cls, [val if isinstance(val, Ring) else Ring(val)\
-                    for val in vals])
+            converted = [val if isinstance(val, Ring) else Ring(val)\
+                    for val in vals]
+            #trim high order zeros
+            while converted[-1] == 0:
+                converted = converted[:-1]
+            return tuple.__new__(cls, converted)
 
         @property
         def vals(self):
@@ -165,7 +196,10 @@ def PolyOver(Ring, symbol='x'):
             return other
 
         def __add__(self, other):
-            other = self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
             p1 = list(self)+max(0,len(other) - len(self)) * [0] 
             p2 = list(other)+max(0,len(self) - len(other)) * [0] 
             return Rx([p1[i] + p2[i] for i in range(len(p1))])
@@ -174,20 +208,29 @@ def PolyOver(Ring, symbol='x'):
             return self.__add__(other)
 
         def __sub__(self, other):
-            self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
             p1 = list(self)+max(0,len(other) - len(self)) * [0] 
             p2 = list(other)+max(0,len(self) - len(other)) * [0] 
-            return Rx([p1[i] - p_2[i] for i in range(len(p1))])
+            return Rx([p1[i] - p2[i] for i in range(len(p1))])
 
         def __rsub__(self, other):
-            self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
             return other.__sub__(self)
 
         def __neg__(self):
             return Rx([-a for a in self])
 
         def __mul__(self, other):
-            self._convert(other)
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
             return Rx([sum([self[i-j]*other[j]\
                 for j in range(max(0,i-len(self)+1),1+min(i,len(other)-1))])\
                 for i in range(0,len(self) + len(other)-1)])
@@ -208,6 +251,54 @@ def PolyOver(Ring, symbol='x'):
 
         def __repr__(self):
             return str(self)
+
+        """
+            This uses the fact that polynomials over a field are a Euclidean Domain
+            to find polynomials q, r such that 
+
+            self = q * other + r
+
+            where r.degree < other.degree
+
+            We use long division
+            The return value is (q,r)
+        """
+        def __truediv__(self, other):
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
+            r = self
+            q = []
+            while r.degree() >= other.degree(): 
+                q = [r[-1] / other[-1]] + q
+                r = r - ((r.degree() - other.degree())*[0]\
+                        + list(q[0] * other)) 
+                         
+            return (Rx(q), r)
+
+        def __rtruediv__(self, other):
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
+            return other.__truediv__(self)
+
+
+        """
+            Returns the r value from the Euclidean algorithm '/' above
+        """
+        def __mod__(self, other):
+            q,r = self.__truediv__(other)
+            return r
+
+        def __rmod__(self, other):
+            try:
+                other = self._convert(other)
+            except:
+                return NotImplemented
+            return other.__mod__(self)
+                
 
     return Rx 
 
