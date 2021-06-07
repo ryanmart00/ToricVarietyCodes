@@ -341,7 +341,7 @@ def _PolyOver(Ring, symbol='x', useParen=True):
             s = self._str_helper(i)
             for j in range(i+1, len(self)):
                 if self[j] != 0:
-                    s += self._str_helper(j)
+                    s += '+' + self._str_helper(j)
             return s
 
         def __repr__(self):
