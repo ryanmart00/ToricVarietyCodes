@@ -332,8 +332,8 @@ def _PolyOver(Ring, symbol='x', useParen=True):
 
 
         def __str__(self):
-            if len(self) == 0:
-                return "0"
+            if len(self) == 0 or self == 0:
+                return '0'
             i = 0
             while self[i] == 0:
                 i = i + 1

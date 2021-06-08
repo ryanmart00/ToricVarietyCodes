@@ -37,7 +37,7 @@ def main(path):
             raise Exception("%i ** %i is not %i" % (p,n,i))
         f = open(path,'a',1)
         f.write('\n%i %i' % (i, codes.CodeFromLatticePoints(fields.F(p,n),\
-                [(0,0),(1,1),(2,1),(1,2)]).d()))
+                [(1,1),(2,1),(1,2)], True).d()))
         f.close()
 
 if __name__ == '__main__':

@@ -20,6 +20,29 @@ def HammingDist(x,y):
 def HammingWeight(x):
     return len([1 for i in range(len(x)) if x[i] != 0])
 
+"""
+    for x of length n, ReducedHammingWeight(x) is 
+    n - largest number of equal digits in x 
+
+    The idea is, we can remove the vector [1,1,1,...,1] from our
+    basis if and then the minimum distance will be the minimum of 
+    this Reduced Distance. This is because the largest number of equal
+    digits y in x corresponds to the Hamming Weight of x - y[1,1,1,...,1] 
+    and will be the smallest Hamming Weight of that form. Finally, every vector 
+    is of this form so we have it
+"""
+def ReducedHammingWeight(x):
+    digits = {}
+    maxParity = 0
+    for el in x:
+        if not str(el) in digits.keys():
+            digits[str(el)] = 1
+        else:
+            digits[str(el)] = digits[str(el)] + 1
+        if digits[str(el)] > maxParity:
+            maxParity = digits[str(el)]
+    return len(x) - maxParity
+
 class Vector(tuple):
     def __add__(self, other):
         if other == 0:
@@ -47,7 +70,11 @@ class Vector(tuple):
         return -self + other
 
 class LinearCode:
-    def __init__(self, F, basis):
+    """
+        Set reduced to true if the element [1,1,1,1 ... , 1] is in the basis 
+        but you've removed it for performance reasons
+    """
+    def __init__(self, F, basis, reduced = False):
         if len(basis) == 0:
             raise Exception("Cannot construct the empty code")
         self.n = len(basis[0])
@@ -57,11 +84,16 @@ class LinearCode:
             raise Exception("Cannot construct a code with mismatched field")
         self.field = F
         self.basis = basis
+        self.reduced = reduced
 
+        
     def k(self):
         return len(self.basis)
 
     def d(self):
+        if self.reduced:
+            return self.d_reduced()
+
         weight = self.n
         for x in Span(self.field, self.basis):
             w = HammingWeight(x)
@@ -69,6 +101,13 @@ class LinearCode:
                 weight = w
         return weight
 
+    def d_reduced(self):
+        weight = self.n
+        for x in Span(self.field, self.basis):
+            w = ReducedHammingWeight(x)
+            if w < weight and w != 0:
+                weight = w
+        return weight
 
 
     def minDist(self):
@@ -82,11 +121,11 @@ def Span(F, basis):
             vecs = vecs + [y]
     return vecs
 
-def CodeFromPolynomialBasis(F, basis, n):
+def CodeFromPolynomialBasis(F, basis, n, reduced=False):
     codeBasis = [Vector([f(x) for x in nonzeroVectors(F,n)]) for f in basis]
-    return LinearCode(F, codeBasis)
+    return LinearCode(F, codeBasis, reduced)
 
-def CodeFromLatticePoints(F, points):
+def CodeFromLatticePoints(F, points, reduced=False):
     if len(points) == 0:
         raise Exception("No points given...")
     n = len(points[0])
@@ -101,4 +140,5 @@ def CodeFromLatticePoints(F, points):
         for i in range(n):
             monomial = P[i](point[i] * [F(0)] + [monomial])
         basis = basis + [monomial]
-    return CodeFromPolynomialBasis(F, basis, n)
+    return CodeFromPolynomialBasis(F, basis, n, reduced)
+
