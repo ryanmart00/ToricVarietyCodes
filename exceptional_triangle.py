@@ -29,7 +29,7 @@ def main():
         else:
             i = 0
             for j in range(1,len(lines)):
-                m = lines[j].split(' ', 1)[0]) 
+                m = lines[j].split(' ', 1)[0]
                 i = max(i,m)
     except:
         f= open(path, 'w')
@@ -38,12 +38,10 @@ def main():
         i = 1
     l = mp.Lock()
     p = mp.Pool()
-    for (j, d) in p.imap_unordered(process, primePowerIterator(i),1):
+    for (j, d) in p.imap_unordered(process, primePowerIterator(i+1),1):
         f = open(path, 'a')
         f.write('\n%i %i' % (j, d))
         f.close()
-        
-
 
 def process(i):
     p = list(fields.primeFactors(i))[0]
