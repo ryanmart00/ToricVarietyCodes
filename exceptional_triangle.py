@@ -17,10 +17,6 @@ def primePowerIterator(i):
 
 path = 'exceptional_triangle.dat'
 
-def init(l):
-    global lock
-    lock = l
-
 def main():
     #first check which have already been computed
     try:
@@ -31,7 +27,10 @@ def main():
             # if we only have one line then we just have the header
             i = 1
         else:
-            i = int(lines[-1].split(' ', 1)[0]) 
+            i = 0
+            for j in range(1,len(lines)):
+                m = lines[j].split(' ', 1)[0]) 
+                i = max(i,m)
     except:
         f= open(path, 'w')
         f.write('q d\n')
