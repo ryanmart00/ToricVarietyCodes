@@ -1,6 +1,7 @@
 import codes
 import fields
 from math import log
+import multiprocessing as mp
 
 def isPrimePower(x):
     if fields.isPrime(x):
@@ -8,7 +9,19 @@ def isPrimePower(x):
     if len(list(fields.primeFactors(x))) == 1:
         return True
 
-def main(path):
+def primePowerIterator(i):
+    while True:
+        if isPrimePower(i):
+            yield i
+        i = i+1
+
+path = 'exceptional_triangle.dat'
+
+def init(l):
+    global lock
+    lock = l
+
+def main():
     #first check which have already been computed
     try:
         f = open(path,'r',1)
@@ -24,21 +37,22 @@ def main(path):
         f.write('q d\n')
         f.close()
         i = 1
-
-
-    while(True):
-        #First find the next i
-        i = i+1
-        while not isPrimePower(i):
-            i = i + 1
-        p = list(fields.primeFactors(i))[0]
-        n = int(log(i, p))
-        if p ** n != i:
-            raise Exception("%i ** %i is not %i" % (p,n,i))
-        f = open(path,'a',1)
-        f.write('\n%i %i' % (i, codes.CodeFromLatticePoints(fields.F(p,n),\
-                [(1,1),(2,1),(1,2)], True).d()))
+    l = mp.Lock()
+    p = mp.Pool()
+    for (j, d) in p.imap_unordered(process, primePowerIterator(i),1):
+        f = open(path, 'a')
+        f.write('\n%i %i' % (j, d))
         f.close()
+        
+
+
+def process(i):
+    p = list(fields.primeFactors(i))[0]
+    n = int(log(i, p))
+    d = codes.CodeFromLatticePoints(fields.F(p,n),\
+            [(1,1),(2,1),(1,2)], True).d()
+    return (i,d)
+
 
 if __name__ == '__main__':
-    main('exceptional_triangle.dat')
+    main()
