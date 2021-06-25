@@ -109,6 +109,15 @@ class LinearCode:
                 weight = w
         return weight
 
+    def d_poly(self):
+        weight = self.n
+        for x in Span(self.field, self.basis):
+            w = ReducedHammingWeight(x)
+            if w < weight and w != 0:
+                weight = w
+        return weight
+
+
 
     def minDist(self):
         return min(HammingDist(x,y) for x in self.elements for y in self.elements if x != y)
@@ -141,4 +150,43 @@ def CodeFromLatticePoints(F, points, reduced=False):
             monomial = P[i](point[i] * [F(0)] + [monomial])
         basis = basis + [monomial]
     return CodeFromPolynomialBasis(F, basis, n, reduced)
+
+def PolyBasisFromLatticePoints(F, points):
+    if len(points) == 0:
+        raise Exception("No points given...")
+    n = len(points[0])
+    if not all(len(p) == n for p in points):
+        raise Exception("Not all points were of the same dimension")
+    P = [PolynomialsOver(F, n)]
+    for i in range(n-1):
+        P = [P[0].R] + P
+    basis = []
+    for point in points:
+        monomial = F(1)
+        for i in range(n):
+            monomial = P[i](point[i] * [F(0)] + [monomial])
+        basis = basis + [monomial]
+    return (n,basis)
+
+def MaxZeros(F, points):
+    n, basis = PolyBasisFromLatticePoints(F,points) 
+    polys = [F(1)]
+    num = 0
+    for p in Span(F, basis):
+        if p == F(0):
+            continue
+        temp = 0
+        for x in nonzeroVectors(F,n):
+            if p(x) == F(0):
+                temp += 1
+        if temp > num:
+            polys = [p]
+            num = temp
+        elif temp == num:
+            polys = polys + [p]
+
+    return (num,polys)
+
+
+    
 

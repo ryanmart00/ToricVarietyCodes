@@ -9,9 +9,10 @@ def isPrimePower(x):
     if len(list(fields.primeFactors(x))) == 1:
         return True
 
-def primePowerIterator(i):
+def primePowerIterator(l):
+    i = 1
     while True:
-        if isPrimePower(i):
+        if isPrimePower(i) and not i in l:
             yield i
         i = i+1
 
@@ -19,6 +20,7 @@ path = 'exceptional_triangle.dat'
 
 def main():
     #first check which have already been computed
+    alreadyComputed = []
     try:
         f = open(path,'r',1)
         lines = f.readlines()
@@ -27,18 +29,16 @@ def main():
             # if we only have one line then we just have the header
             i = 1
         else:
-            i = 0
-            for j in range(1,len(lines)):
-                m = lines[j].split(' ', 1)[0]
-                i = max(i,m)
+            alreadyComputed = [lines[j].split(' ', 1)[0] 
+                    for j in range(2,len(lines))]
     except:
         f= open(path, 'w')
-        f.write('q d\n')
+        f.write('q d')
         f.close()
         i = 1
-    l = mp.Lock()
     p = mp.Pool()
-    for (j, d) in p.imap_unordered(process, primePowerIterator(i+1),1):
+    for (j, d) in p.imap_unordered(process, 
+            primePowerIterator(alreadyComputed),1):
         f = open(path, 'a')
         f.write('\n%i %i' % (j, d))
         f.close()
