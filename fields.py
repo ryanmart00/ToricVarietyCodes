@@ -41,11 +41,11 @@ class PrimeMeta(type):
         return str(cls)
 
     def __str__(cls):
-        return "Z/%iZ" % cls.p
+        return "Z/%iZ" % cls.P
 
     def __eq__(cls, other):
         if type(cls) == type(other):
-            return cls.p == other.p
+            return cls.P == other.P
         return False
 
 """
