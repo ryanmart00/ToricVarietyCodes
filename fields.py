@@ -373,11 +373,12 @@ def _PolyOver(Ring, symbol='x', useParen=True):
             except:
                 return NotImplemented
             r = self
-            q = []
+            q = (r.degree() - other.degree()+1)*[Rx.R.constant(0)]
             while r.degree() >= other.degree(): 
-                q = [r[-1] / other[-1]] + q
+                t = r[-1] / other[-1]
+                q[r.degree() - other.degree()] = t
                 r = r -\
-                    Rx((r.degree() - other.degree())*[Rx.R.constant(0)] + list(q[0] * other)) 
+                    Rx((r.degree() - other.degree())*[Rx.R.constant(0)] + list(t * other)) 
                          
             return (Rx(q), r)
 
@@ -472,6 +473,29 @@ def _getIrreducible(Poly, deg):
                 # This polynomial has no zeros <=> Has no linear factors
                 return f
     raise ValueError("We couldn't find an irreducible polynomial...")
+
+def _getAllIrreducibles(Poly, deg):
+    R = Poly.R
+    #Store lower order irreducibles
+    irreducibles = []
+    if not isinstance(deg, int) or deg < 2:
+        raise TypeError("No irreducible polynomials of degree %s" % deg)
+    for i in range(2, deg-1):
+        for f in Poly.monic(i):
+            if all(f(x) != 0 for x in R.set()):
+                # This polynomial has no zeros <=> Has no linear factors
+                if all(f % g != 0 for g in irreducibles):
+                    # f has no irreducible factors either
+                    irreducibles += [f]
+
+    sols = []
+    for f in Poly.monic(deg):
+        if all(f % g != 0 for g in irreducibles):
+            # f has no irreducible factors either
+            if all(f(x) != 0 for x in R.set()):
+                # This polynomial has no zeros <=> Has no linear factors
+                sols += [f]
+    return sols
 
 """
     This is adapted from ''Three Ways to Test Irreducibility'' by Richard P. Brent
